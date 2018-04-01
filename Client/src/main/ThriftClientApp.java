@@ -3,7 +3,6 @@ package main;
 import gui.AppWindow;
 import javax.swing.SwingUtilities;
 
-
 public class ThriftClientApp {
 
 	public static void main(String[] args) {
