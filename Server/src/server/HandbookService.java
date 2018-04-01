@@ -18,39 +18,52 @@ import handbook.NoAuthorException;
 public class HandbookService implements Iface {
 	
 	private DatabaseController dbController;
+	
+	private int authorId = 1;
+	private int articleId = 1;
 
 
 	public HandbookService(DatabaseController dbController) {
 		this.dbController = dbController;
 	}
 
+	
 	@Override
 	public String getArticleContent(int id) throws NoArticleException, TException {
-		// TODO Auto-generated method stub
-		return null;
+		return dbController.getArticleContentById(id);
 	}
 
 	@Override
 	public List<ArticleHeader> getArticlesHeaders() throws TException {
-		// TODO Auto-generated method stub
-		return null;
+		return dbController.getArticles();
 	}
 
+	
 	@Override
 	public Author getAuthor(int id) throws NoAuthorException, TException {
-		// TODO Auto-generated method stub
-		return null;
+		return dbController.getAuthorById(id);
 	}
-
+	
 	@Override
 	public int addAuthor(Author author) throws TException {
-		// TODO Auto-generated method stub
-		return 0;
+		// TODO: validate author
+		author.setId(getNextAuthorId());
+		
+		if (dbController.addAuthor(author)) {
+			return author.getId();
+		} else {
+			--authorId;
+			return 0;
+		}
 	}
+	
+	private int getNextAuthorId() {
+		return authorId++;
+	}
+	
 
 	@Override
 	public int addArticle(ArticleHeader article) throws NoArticleException, NoAuthorException, TException {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
@@ -59,7 +72,12 @@ public class HandbookService implements Iface {
 		// TODO Auto-generated method stub
 
 	}
+	
+	private int getNextArticleId() {
+		return articleId++;
+	}
 
+	
 	@Override
 	public void updateArticleHeader(ArticleHeader article) throws NoArticleException, NoAuthorException, TException {
 		// TODO Auto-generated method stub
