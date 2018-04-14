@@ -1,11 +1,12 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,8 +14,6 @@ import java.util.Map;
 
 import handbook.ArticleHeader;
 import handbook.Author;
-import handbook.NoArticleException;
-import handbook.NoAuthorException;
 
 
 
@@ -24,11 +23,20 @@ public class DatabaseController {
 		AUTHOR_BY_ID,
 		ADD_AUTHOR,
 		ARTICLES_HEADERS,
-		ARTICLE_CONTENT
+		ARTICLE_CONTENT,
+		ADD_ARTICLE,
+		UPDATE_ARTICLE,
+		UPDATE_CONTENT,
+		DELETE_ARTICLE
 	}
 	
 	private final String DB_NAME = "pascal_handbook";
+	private final String TABLE_ARTICLES = DB_NAME + ".articles";
+	private final String TABLE_AUTHORS = DB_NAME + ".authors";
 	private final String DB_URL = "jdbc:mysql://localhost:3306/" + DB_NAME;
+	
+	private final String DB_USER = "thrift";
+	private final String DB_PASS = "thrift";
 	
 	private Connection connection;
 	private Map<QUERY_TYPE, PreparedStatement> queries;
@@ -37,6 +45,7 @@ public class DatabaseController {
 	public DatabaseController() {
 		queries = new HashMap<QUERY_TYPE, PreparedStatement>(); 
 		
+		// TODO: change driver initialization method
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 		} catch (ClassNotFoundException e) {
@@ -44,16 +53,24 @@ public class DatabaseController {
 		}
 	}
 	
-	private boolean prepareStatements() {
+	private boolean prepareQueries() {
 		try {
 			queries.put(QUERY_TYPE.AUTHOR_BY_ID,
-				connection.prepareStatement("SELECT * FROM " + DB_NAME + ".authors WHERE author_id = ?"));
+				connection.prepareStatement("SELECT * FROM " + TABLE_AUTHORS + " WHERE author_id = ?;"));
 			queries.put(QUERY_TYPE.ADD_AUTHOR,
-				connection.prepareStatement("INSERT INTO " + DB_NAME + ".authors (author_id, author_name, author_country) VALUES (?, ?, ?)"));
+				connection.prepareStatement("INSERT INTO " + TABLE_AUTHORS + " (author_id, author_name, author_country) VALUES (?, ?, ?);"));
 			queries.put(QUERY_TYPE.ARTICLES_HEADERS,
-				connection.prepareStatement("SELECT * FROM " + DB_NAME + ".articles"));
+				connection.prepareStatement("SELECT * FROM " + TABLE_ARTICLES + ";"));
 			queries.put(QUERY_TYPE.ARTICLE_CONTENT,
-					connection.prepareStatement("SELECT article_content FROM " + DB_NAME + ".articles WHERE article_id = ?"));
+				connection.prepareStatement("SELECT article_content FROM " + TABLE_ARTICLES + " WHERE article_id = ?;"));
+			queries.put(QUERY_TYPE.ADD_ARTICLE,
+				connection.prepareStatement("INSERT INTO " + TABLE_ARTICLES + " (article_id, author_id, parent_id, creation_date, article_title) VALUES (?, ?, ?, ?, ?);"));
+			queries.put(QUERY_TYPE.UPDATE_ARTICLE,
+				connection.prepareStatement("UPDATE " + TABLE_ARTICLES + " SET article_title = ? WHERE article_id = ?;"));
+			queries.put(QUERY_TYPE.UPDATE_CONTENT,
+				connection.prepareStatement("UPDATE " + TABLE_ARTICLES + " SET article_content = ? WHERE article_id = ?;"));
+			queries.put(QUERY_TYPE.DELETE_ARTICLE,
+					connection.prepareStatement("DELETE FROM " + TABLE_ARTICLES + " WHERE article_id = ?"));
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -65,7 +82,7 @@ public class DatabaseController {
 	
 	public boolean connect() {
 		try {
-			connection = DriverManager.getConnection(DB_URL, "thrift", "thrift");
+			connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			
@@ -80,14 +97,22 @@ public class DatabaseController {
 			return false;
 		}
 		
-		if (!prepareStatements()) {
+		if (!prepareQueries()) {
 			return false;
 		}
 		
 		return true;
 	}
+	
+	private void printSqlException(SQLException exception) {
+		System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.err.println("SQL state: " + exception.getSQLState() + "; Error code: " + exception.getErrorCode());
+		System.err.println("Message: " + exception.getMessage());
+		System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+	}
 
-	public Author getAuthorById(int id) throws NoAuthorException {
+
+	public Author getAuthorById(int id) throws EntityNotFoundException, DatabaseException {
 		PreparedStatement query = queries.get(QUERY_TYPE.AUTHOR_BY_ID);
 		
 		try {
@@ -101,16 +126,16 @@ public class DatabaseController {
 				
 				return new Author(id, name, country);
 			} else {
-				throw new NoAuthorException();
+				throw new EntityNotFoundException();
 			}
+
 		} catch (SQLException e) {
-			e.printStackTrace();
-			// TODO: find out better solution
-			throw new NoAuthorException();
+			printSqlException(e);
+			throw new DatabaseException();
 		}
 	}
 
-	public boolean addAuthor(Author author) {
+	public void addAuthor(Author author) throws DatabaseException {
 		PreparedStatement query = queries.get(QUERY_TYPE.ADD_AUTHOR);
 		
 		try {
@@ -121,14 +146,12 @@ public class DatabaseController {
 			query.executeUpdate();
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
-			return false;
+			printSqlException(e);
+			throw new DatabaseException();
 		}
-		
-		return false;
 	}
 
-	public List<ArticleHeader> getArticles() {
+	public List<ArticleHeader> getArticles() throws DatabaseException {
 		PreparedStatement query = queries.get(QUERY_TYPE.ARTICLES_HEADERS);
 		
 		List<ArticleHeader> articles = new ArrayList<ArticleHeader>();
@@ -151,13 +174,14 @@ public class DatabaseController {
 			}
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+			printSqlException(e);
+			throw new DatabaseException();
 		}
 		
 		return articles;
 	}
 
-	public String getArticleContentById(int id) throws NoArticleException {
+	public String getArticleContentById(int id) throws EntityNotFoundException, DatabaseException {
 		PreparedStatement query = queries.get(QUERY_TYPE.ARTICLE_CONTENT);
 		
 		try {
@@ -168,12 +192,75 @@ public class DatabaseController {
 			if (result.next()) {
 				return result.getString("article_content");
 			} else {
-				throw new NoArticleException();
+				throw new EntityNotFoundException();
 			}
+
 		} catch (SQLException e) {
-			e.printStackTrace();
-			// TODO: find out better solution
-			throw new NoArticleException();
+			printSqlException(e);
+			throw new DatabaseException();
 		}
+	}
+
+	public void addArticle(ArticleHeader article) throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.ADD_ARTICLE);
+		
+		try {
+			query.setInt(1, article.getId());
+			query.setInt(2, article.getAuthorId());
+			query.setInt(3, article.getParentId());
+			query.setDate(4, Date.valueOf(article.getDate()));
+			query.setString(5, article.getTitle());
+
+			query.executeUpdate();
+			
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+	}
+
+	public void updateArticle(ArticleHeader article) throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.UPDATE_ARTICLE);
+		
+		try {
+			query.setString(1, article.getTitle());
+			query.setInt(2, article.getId());
+			
+			query.executeUpdate();
+			
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+	}
+
+	public void updateArticleContent(int id, String content) throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.UPDATE_CONTENT);
+		
+		try {
+			query.setString(1, content);
+			query.setInt(2, id);
+			
+			query.executeUpdate();
+
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+	}
+
+	public void deleteArticle(int id) throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.DELETE_ARTICLE);
+		
+		try {
+			query.setInt(1, id);
+			
+			query.executeUpdate();
+			
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+		
 	}
 }
