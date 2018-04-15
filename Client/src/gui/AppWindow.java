@@ -12,20 +12,18 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTree;
 
+import controller.HandbookClientController;
+
 
 
 public class AppWindow {
+	
+	private HandbookClientController controller;
 
 	private JFrame mainFrame;
 	
 	// server panel
-	
-	private JPanel serverPanel;
-
-	private JTextField ipField;
-	private JTextField portField;
-	private JButton connectButton;
-	private JLabel statusLabel;
+	private ServerPanel serverPanel;
 	
 	// article panel
 	
@@ -50,81 +48,16 @@ public class AppWindow {
 	private JTree articleTree;
 	
 
-	public AppWindow() {
+	public AppWindow(HandbookClientController controller) {
+		this.controller = controller;
+
 		initialize();
 	}
 	
 	public void start() {
 		mainFrame.setVisible(true);
 	}
-	
-	private void initializeServerPanel() {
-		serverPanel = new JPanel(new GridBagLayout());
-		
-		statusLabel = new JLabel("Server status");
-		
-		GridBagConstraints constr = new GridBagConstraints();
-		constr.gridx = 0;
-		constr.gridy = 0;
-		constr.gridwidth = 3;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		constr.weightx = 0.2;
-		
-		serverPanel.add(statusLabel, constr);
-		
-		JLabel ipLabel = new JLabel("Address:");
-		
-		constr = new GridBagConstraints();
-		constr.gridx = 0;
-		constr.gridy = 1;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		
-		serverPanel.add(ipLabel, constr);
-		
-		ipField = new JTextField();
-		
-		constr = new GridBagConstraints();
-		constr.gridx = 1;
-		constr.gridy = 1;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		constr.weightx = 0.5;
-		
-		serverPanel.add(ipField, constr);
-		
-		connectButton = new JButton("Connect");
-		
-		constr = new GridBagConstraints();
-		constr.gridx = 2;
-		constr.gridy = 1;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		constr.weightx = 0.3;
-		
-		serverPanel.add(connectButton, constr);
-		
-		JLabel portLabel = new JLabel("Port:");
-		
-		constr = new GridBagConstraints();
-		constr.gridx = 0;
-		constr.gridy = 2;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		
-		serverPanel.add(portLabel, constr);
-		
-		portField = new JTextField();
-		
-		constr = new GridBagConstraints();
-		constr.gridx = 1;
-		constr.gridy = 2;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
-		
-		serverPanel.add(portField, constr);
-	}
+
 	
 	private void initializeArticlePanel() { 
 		articlePanel = new JPanel(new GridBagLayout());
@@ -209,7 +142,7 @@ public class AppWindow {
 		mainFrame.setBounds(100, 100, 450, 300);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		initializeServerPanel();
+		serverPanel = new ServerPanel(this);
 		initializeArticlePanel();
 		initializeButtonsPanel();
 		
@@ -223,7 +156,7 @@ public class AppWindow {
 		constr.weightx = 0.7;
 		constr.weighty = 0.05;
 		
-		mainFrame.add(serverPanel, constr);
+		mainFrame.add(serverPanel.getPanel(), constr);
 		
 		constr = new GridBagConstraints();
 		constr.gridx = 0;
@@ -256,6 +189,10 @@ public class AppWindow {
 		constr.weightx = 0.3;
 		
 		mainFrame.add(articleTree, constr);
+	}
+
+	public HandbookClientController getController() {
+		return controller;
 	}
 
 }
