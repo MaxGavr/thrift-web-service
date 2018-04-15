@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.text.ParseException;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -63,6 +64,8 @@ public class ServerPanel {
 			portField.setEnabled(false);
 			
 			connectButton.setText("Disconnect");
+			
+			parentWindow.onConnectToServer();
 		}
 	}
 	
@@ -72,6 +75,8 @@ public class ServerPanel {
 		ipField.setEnabled(true);
 		portField.setEnabled(true);
 		connectButton.setText("Connect");
+		
+		parentWindow.onDisconnectFromServer();
 	}
 
 
@@ -149,7 +154,7 @@ public class ServerPanel {
 		serverPanel.add(portField, constr);
 	}
 	
-	public JPanel getPanel() {
+	public JComponent getRootComponent() {
 		return serverPanel;
 	}
 

@@ -52,11 +52,23 @@ public class HandbookService implements Iface {
 
 	
 	@Override
-	public Author getAuthor(int id) throws NoAuthorException, TException {
+	public Author getAuthorById(int id) throws NoAuthorException, TException {
 		try {
 			return dbController.getAuthorById(id);
 		} catch (EntityNotFoundException e) {
 			throw new NoAuthorException(id);
+		} catch (DatabaseException e) {
+			// TODO: handle db exception
+			throw new TException();
+		}
+	}
+	
+	@Override
+	public Author getAuthorByName(String name) throws NoAuthorException, TException {
+		try {
+			return dbController.getAuthorByName(name);
+		} catch (EntityNotFoundException e) {
+			throw new NoAuthorException(-1);
 		} catch (DatabaseException e) {
 			// TODO: handle db exception
 			throw new TException();

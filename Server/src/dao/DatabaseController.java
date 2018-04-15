@@ -21,6 +21,7 @@ public class DatabaseController {
 	
 	private enum QUERY_TYPE {
 		AUTHOR_BY_ID,
+		AUTHOR_BY_NAME,
 		ADD_AUTHOR,
 		ARTICLES_HEADERS,
 		ARTICLE_CONTENT,
@@ -57,6 +58,8 @@ public class DatabaseController {
 		try {
 			queries.put(QUERY_TYPE.AUTHOR_BY_ID,
 				connection.prepareStatement("SELECT * FROM " + TABLE_AUTHORS + " WHERE author_id = ?;"));
+			queries.put(QUERY_TYPE.AUTHOR_BY_NAME,
+					connection.prepareStatement("SELECT * FROM " + TABLE_AUTHORS + " WHERE author_name = ?;"));
 			queries.put(QUERY_TYPE.ADD_AUTHOR,
 				connection.prepareStatement("INSERT INTO " + TABLE_AUTHORS + " (author_id, author_name, author_country) VALUES (?, ?, ?);"));
 			queries.put(QUERY_TYPE.ARTICLES_HEADERS,
@@ -122,6 +125,29 @@ public class DatabaseController {
 			
 			if (result.next()) {
 				String name = result.getString("author_name");
+				String country = result.getString("author_country");
+				
+				return new Author(id, name, country);
+			} else {
+				throw new EntityNotFoundException();
+			}
+
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+	}
+	
+	public Author getAuthorByName(String name) throws EntityNotFoundException, DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.AUTHOR_BY_NAME);
+		
+		try {
+			query.setString(1, name);
+			
+			ResultSet result = query.executeQuery();
+			
+			if (result.next()) {
+				int id = result.getInt("author_id");
 				String country = result.getString("author_country");
 				
 				return new Author(id, name, country);

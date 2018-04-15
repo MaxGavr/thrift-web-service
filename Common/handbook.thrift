@@ -35,7 +35,9 @@ service Handbook
         throws (1: NoArticleException ex),
     list<ArticleHeader> getArticlesHeaders(),
     
-    Author getAuthor(1: AuthorID id)
+    Author getAuthorById(1: AuthorID id)
+        throws (1: NoAuthorException ex),
+    Author getAuthorByName(1: string authorName)
         throws (1: NoAuthorException ex),
     AuthorID addAuthor(1: Author author),
 
