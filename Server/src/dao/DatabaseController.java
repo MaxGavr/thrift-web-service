@@ -6,7 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +28,9 @@ public class DatabaseController {
 		ADD_ARTICLE,
 		UPDATE_ARTICLE,
 		UPDATE_CONTENT,
-		DELETE_ARTICLE
+		DELETE_ARTICLE,
+		GET_LAST_ARTICLE_ID,
+		GET_LAST_AUTHOR_ID
 	}
 	
 	private final String DB_NAME = "pascal_handbook";
@@ -67,13 +69,17 @@ public class DatabaseController {
 			queries.put(QUERY_TYPE.ARTICLE_CONTENT,
 				connection.prepareStatement("SELECT article_content FROM " + TABLE_ARTICLES + " WHERE article_id = ?;"));
 			queries.put(QUERY_TYPE.ADD_ARTICLE,
-				connection.prepareStatement("INSERT INTO " + TABLE_ARTICLES + " (article_id, author_id, parent_id, creation_date, article_title) VALUES (?, ?, ?, ?, ?);"));
+				connection.prepareStatement("INSERT INTO " + TABLE_ARTICLES + " (article_id, author_id, parent_id, creation_date, article_title, article_content) VALUES (?, ?, ?, ?, ?, ?);"));
 			queries.put(QUERY_TYPE.UPDATE_ARTICLE,
 				connection.prepareStatement("UPDATE " + TABLE_ARTICLES + " SET article_title = ? WHERE article_id = ?;"));
 			queries.put(QUERY_TYPE.UPDATE_CONTENT,
 				connection.prepareStatement("UPDATE " + TABLE_ARTICLES + " SET article_content = ? WHERE article_id = ?;"));
 			queries.put(QUERY_TYPE.DELETE_ARTICLE,
 					connection.prepareStatement("DELETE FROM " + TABLE_ARTICLES + " WHERE article_id = ?"));
+			queries.put(QUERY_TYPE.GET_LAST_ARTICLE_ID,
+					connection.prepareStatement("SELECT MAX(article_id) FROM " + TABLE_ARTICLES));
+			queries.put(QUERY_TYPE.GET_LAST_AUTHOR_ID,
+					connection.prepareStatement("SELECT MAX(author_id) FROM " + TABLE_AUTHORS));
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -109,6 +115,7 @@ public class DatabaseController {
 	
 	private void printSqlException(SQLException exception) {
 		System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.err.println("SQL exception!");
 		System.err.println("SQL state: " + exception.getSQLState() + "; Error code: " + exception.getErrorCode());
 		System.err.println("Message: " + exception.getMessage());
 		System.err.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
@@ -193,6 +200,9 @@ public class DatabaseController {
 				article.setId(result.getInt("article_id"));
 				article.setAuthorId(result.getInt("author_id"));
 				article.setParentId(result.getInt("parent_id"));
+				if (result.wasNull()) {
+					article.setParentId(-1);
+				}
 				article.setDate(result.getDate("creation_date").toString());
 				article.setTitle(result.getString("article_title"));
 				
@@ -233,9 +243,14 @@ public class DatabaseController {
 		try {
 			query.setInt(1, article.getId());
 			query.setInt(2, article.getAuthorId());
-			query.setInt(3, article.getParentId());
+			if (article.getParentId() == -1) {
+				query.setNull(3, Types.INTEGER);
+			} else {
+				query.setInt(3, article.getParentId());
+			}
 			query.setDate(4, Date.valueOf(article.getDate()));
 			query.setString(5, article.getTitle());
+			query.setString(6, "");
 
 			query.executeUpdate();
 			
@@ -288,5 +303,41 @@ public class DatabaseController {
 			throw new DatabaseException();
 		}
 		
+	}
+	
+	public int getLastArticleId() throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.GET_LAST_ARTICLE_ID);
+		
+		try {
+			ResultSet result = query.executeQuery();
+			
+			if (result.next()) {
+				return result.getInt(1);
+			}
+			
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+		
+		return 1;
+	}
+	
+	public int getLastAuthorId() throws DatabaseException {
+		PreparedStatement query = queries.get(QUERY_TYPE.GET_LAST_AUTHOR_ID);
+		
+		try {
+			ResultSet result = query.executeQuery();
+			
+			if (result.next()) {
+				return result.getInt(1);
+			}
+			
+		} catch (SQLException e) {
+			printSqlException(e);
+			throw new DatabaseException();
+		}
+		
+		return 1;
 	}
 }

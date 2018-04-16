@@ -26,6 +26,7 @@ public class AuthorPanel {
 	private JLabel authorCountryLabel;
 	
 	private boolean isAuthorised;
+	private Author currentAuthor;
 	
 
 	public AuthorPanel(AppWindow parentWindow) {
@@ -42,6 +43,10 @@ public class AuthorPanel {
 	
 	public boolean getIsAuthorised() {
 		return isAuthorised;
+	}
+	
+	public Author getCurrentAuthor() {
+		return currentAuthor;
 	}
 	
 	
@@ -68,7 +73,6 @@ public class AuthorPanel {
 		authorPanel.add(loginButton);
 	}
 
-
 	private void login() {
 		String authorName = JOptionPane.showInputDialog("Enter your name:");
 		
@@ -77,27 +81,26 @@ public class AuthorPanel {
 		}
 		
 		
-		Author author;
 		try {
-			author = parentWindow.getController().getAuthorByName(authorName);
+			currentAuthor = parentWindow.getController().getAuthorByName(authorName);
 			isAuthorised = true;
 			
 		} catch (NoAuthorException e) {
 			String authorCountry = JOptionPane.showInputDialog("Enter country:");
 			
-			author = new Author(-1, authorName, authorCountry);
+			currentAuthor = new Author(-1, authorName, authorCountry);
 			
-			parentWindow.getController().addAuthor(author);
+			currentAuthor.setId(parentWindow.getController().addAuthor(currentAuthor));
 			isAuthorised = true;
 		}
 		
-		showAuthorInfo(author);
+		showAuthorInfo();
 		parentWindow.onChooseAuthor();
 	}
 	
-	private void showAuthorInfo(Author author) {
-		authorNameLabel.setText("Name: " + author.getName());
-		authorCountryLabel.setText("Country: " + author.getCountry());
+	private void showAuthorInfo() {
+		authorNameLabel.setText("Name: " + currentAuthor.getName());
+		authorCountryLabel.setText("Country: " + currentAuthor.getCountry());
 		
 		authorNameLabel.setEnabled(true);
 		authorCountryLabel.setEnabled(true);

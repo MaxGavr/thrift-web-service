@@ -7,6 +7,10 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
+import handbook.ArticleHeader;
+import handbook.Author;
 
 
 
@@ -18,10 +22,13 @@ public class ArticlePanel {
 	
 	private JLabel authorLabel;
 	private JLabel dateLabel;
-	private JLabel titleLabel;
+	private JTextField titleLabel;
 	
 	private JTextArea articleContent;
 	
+	private ArticleHeader currentArticle;
+	
+	private boolean editMode;
 	
 	
 	public ArticlePanel(AppWindow parentWindow) {
@@ -30,12 +37,50 @@ public class ArticlePanel {
 		initializeControls();
 	}
 	
+
+	public JComponent getRootComponent() {
+		return articlePanel;
+	}
+
+	public void showArticle(ArticleHeader article) {
+		currentArticle = article;
+		
+		String content = parentWindow.getController().getArticleContent(article.getId());
+		Author author = parentWindow.getController().getAuthorById(article.getAuthorId());
+		
+		authorLabel.setText(author.getName());
+		dateLabel.setText(article.getDate());
+		titleLabel.setText(article.getTitle());
+		articleContent.setText(content);
+	}
+
+	public boolean isEditModeEnabled() {
+		return editMode;
+	}
+	
+	public void enableEditMode(boolean enable) {
+		titleLabel.setEditable(enable);
+		articleContent.setEditable(enable);
+		
+		editMode = enable;
+	}
+	
+	public void updateArticle() {
+		currentArticle.setTitle(titleLabel.getText());
+		
+		parentWindow.getController().updateArticle(currentArticle, articleContent.getText());
+		parentWindow.getTreePanel().updateArticlesTree();
+		enableEditMode(false);
+	}
+
+	
 	private void initializeControls() {
 		articlePanel = new JPanel(new GridBagLayout());
 		
 		// article content pane
 		
 		articleContent = new JTextArea("article's content");
+		articleContent.setEditable(false);
 		
 		GridBagConstraints constr = new GridBagConstraints();
 		constr.gridx = 0;
@@ -76,7 +121,8 @@ public class ArticlePanel {
 		
 		// title label
 		
-		titleLabel = new JLabel("Title");
+		titleLabel = new JTextField("Title");
+		titleLabel.setEditable(false);
 		
 		constr = new GridBagConstraints();
 		constr.gridx = 0;
@@ -87,10 +133,6 @@ public class ArticlePanel {
 		constr.weighty = 0.1;
 		
 		articlePanel.add(titleLabel, constr);
-	}
-
-	public JComponent getRootComponent() {
-		return articlePanel;
 	}
 
 }

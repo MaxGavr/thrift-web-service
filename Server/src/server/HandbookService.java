@@ -25,6 +25,13 @@ public class HandbookService implements Iface {
 
 	public HandbookService(DatabaseController dbController) {
 		this.dbController = dbController;
+		
+		try {
+			articleId = dbController.getLastArticleId();
+			authorId = dbController.getLastAuthorId();
+		} catch (DatabaseException e) {
+			e.printStackTrace();
+		}
 	}
 
 	
@@ -35,7 +42,7 @@ public class HandbookService implements Iface {
 		} catch (EntityNotFoundException e) {
 			throw new NoArticleException(id);
 		} catch (DatabaseException e) {
-			// TODO: handle db exception
+			System.out.println("kek");
 			throw new TException();
 		}
 	}
@@ -92,7 +99,7 @@ public class HandbookService implements Iface {
 	}
 	
 	private int getNextAuthorId() {
-		return authorId++;
+		return ++authorId;
 	}
 	
 
@@ -123,7 +130,7 @@ public class HandbookService implements Iface {
 	}
 	
 	private int getNextArticleId() {
-		return articleId++;
+		return ++articleId;
 	}
 
 	
@@ -143,10 +150,12 @@ public class HandbookService implements Iface {
 				throw new NoArticleException(article.getId());
 			}
 			
-			try {
-				dbController.getArticleContentById(article.getParentId());
-			} catch (EntityNotFoundException e) {
-				throw new NoArticleException(article.getParentId());
+			if (article.getParentId() != -1) {
+				try {
+					dbController.getArticleContentById(article.getParentId());
+				} catch (EntityNotFoundException e) {
+					throw new NoArticleException(article.getParentId());
+				}
 			}
 			
 			dbController.updateArticle(article);

@@ -7,7 +7,12 @@ import java.util.Map;
 
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 import gui.AppWindow;
 import handbook.ArticleHeader;
@@ -22,27 +27,25 @@ public class ContentTreePanel {
 	private HandbookContentTree tree;
 
 	
-
 	public ContentTreePanel(AppWindow parentWindow) {
 		this.parentWindow = parentWindow;
 
 		initializeControls();
 	}
 	
-	private void  initializeControls() {
-		DefaultMutableTreeNode topNode = new DefaultMutableTreeNode("Pascal Handbook");
-		tree = new HandbookContentTree(topNode);
-		
-		treeView = new JScrollPane(tree);
-	}
 	
 	public JComponent getRootComponent() {
 		return treeView;
 	}
 	
+	public void updateArticlesTree() {
+		showArticles(parentWindow.getController().getArticlesList());
+	}
+	
 	public void showArticles(List<ArticleHeader> articles) {
 		
-		DefaultMutableTreeNode root = new DefaultMutableTreeNode("Pascal Handbook");
+		DefaultMutableTreeNode root = getTreeRoot();
+		root.removeAllChildren();
 		
 		// article id to node
 		Map<Integer, DefaultMutableTreeNode> treeNodes = new HashMap<Integer, DefaultMutableTreeNode>();
@@ -79,7 +82,50 @@ public class ContentTreePanel {
 			}
 		}
 		
-		tree = new HandbookContentTree(root);
+		((DefaultTreeModel)tree.getModel()).reload();
 	}
 
+	public int getSelectedArticleId() {
+		
+		TreePath selection = tree.getSelectionPath();
+		
+		// root selected
+		if (selection == null || selection.getPathCount() == 1) {
+			return -1;
+		}		
+		
+		DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selection.getLastPathComponent();
+		return ((ArticleHeader)selectedNode.getUserObject()).getId();
+	}
+	
+	
+	private void initializeControls() {
+		DefaultMutableTreeNode topNode = new DefaultMutableTreeNode("Pascal Handbook");
+		tree = new HandbookContentTree(topNode);
+		tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+		
+		tree.addTreeSelectionListener(new TreeSelectionListener() {
+			@Override
+			public void valueChanged(TreeSelectionEvent e) {
+				onSelectedArticleChanged();
+			}
+		});
+		
+		treeView = new JScrollPane(tree);
+	}
+	
+	private void onSelectedArticleChanged() {
+		DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+		if (selectedNode == null || selectedNode == getTreeRoot()) {
+			return;
+		}
+		
+		ArticleHeader selectedArticle = (ArticleHeader) selectedNode.getUserObject();
+		parentWindow.getArticlePanel().showArticle(selectedArticle);
+	}
+
+	private DefaultMutableTreeNode getTreeRoot() {
+		return (DefaultMutableTreeNode) ((DefaultTreeModel)tree.getModel()).getRoot();
+	}
+	
 }

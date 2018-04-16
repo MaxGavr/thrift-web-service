@@ -51,6 +51,26 @@ public class AppWindow {
 		return controller;
 	}
 	
+	public ServerPanel getServerPanel() {
+		return serverPanel;
+	}
+	
+	public ArticlePanel getArticlePanel() {
+		return articlePanel;
+	}
+	
+	public ButtonsPanel getButtonsPanel() {
+		return buttonsPanel;
+	}
+	
+	public ContentTreePanel getTreePanel() {
+		return treePanel;
+	}
+	
+	public AuthorPanel getAuthorPanel() {
+		return authorPanel;
+	}
+	
 	
 	public void onConnectToServer() {
 		enableComponent(authorPanel.getRootComponent(), true);
@@ -68,6 +88,8 @@ public class AppWindow {
 		enableComponent(articlePanel.getRootComponent(), true);
 		enableComponent(treePanel.getRootComponent(), true);
 		enableComponent(buttonsPanel.getRootComponent(), true);
+		
+		treePanel.updateArticlesTree();
 	}
 	
 	

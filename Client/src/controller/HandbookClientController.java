@@ -15,6 +15,7 @@ import gui.AppWindow;
 import handbook.ArticleHeader;
 import handbook.Author;
 import handbook.Handbook;
+import handbook.NoArticleException;
 import handbook.NoAuthorException;
 
 
@@ -92,6 +93,70 @@ public class HandbookClientController {
 		} catch (TException e) {
 			view.showAlertMessage("An error occured while processing task!");
 			return -1;
+		}
+	}
+
+	public void addArticle(ArticleHeader article) {
+		try {
+			client.addArticle(article);
+		} catch (NoArticleException e) {
+			view.showAlertMessage("Can not add article, because parent article doesn't exist.");
+		} catch (NoAuthorException e) {
+			view.showAlertMessage("Can not add article due to invalid author ID.");
+		} catch (TException e) {
+			view.showAlertMessage("An error occured while processing task!");
+		}
+	}
+
+	public String getArticleContent(int articleId) {
+		try {
+			return client.getArticleContent(articleId);
+		} catch (NoArticleException e) {
+			view.showAlertMessage("Can not get content of nonexisting article!");
+		} catch (TException e) {
+			view.showAlertMessage("An error occured while processing task!");
+		}
+		
+		return "";
+	}
+
+	public Author getAuthorById(int authorId) {
+		try {
+			return client.getAuthorById(authorId);
+		} catch (NoAuthorException e) {
+			view.showAlertMessage("Author doesn't exist.");
+		} catch (TException e) {
+			view.showAlertMessage("An error occured while processing task!");
+		}
+		
+		return null;
+	}
+
+
+	public void updateArticle(ArticleHeader article, String content) {
+		try {
+			String oldContent = getArticleContent(article.getId());
+			if (oldContent != content) {
+				client.updateArticleContent(article.getId(), content);
+			}
+			
+			client.updateArticleHeader(article);
+		} catch (NoArticleException e) {
+			view.showAlertMessage("Can not update article with invalid ID.");
+		} catch (NoAuthorException e) {
+			view.showAlertMessage("Can not update article of nonexisting author.");
+		} catch (TException e) {
+			view.showAlertMessage("An error occured while processing task!");
+		}
+	}
+
+	public void deleteArticle(int articleId) {
+		try {
+			client.deleteArticle(articleId);
+		} catch (NoArticleException e) {
+			view.showAlertMessage("Can not delete nonexisting article.");
+		} catch (TException e) {
+			view.showAlertMessage("An error occured while processing task!");
 		}
 	}
 }
