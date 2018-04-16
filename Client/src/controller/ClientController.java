@@ -15,12 +15,13 @@ import gui.AppWindow;
 import handbook.ArticleHeader;
 import handbook.Author;
 import handbook.Handbook;
+import handbook.InternalServiceException;
 import handbook.NoArticleException;
 import handbook.NoAuthorException;
 
 
 
-public class HandbookClientController {
+public class ClientController {
 	
 	AppWindow view;
 	
@@ -28,7 +29,7 @@ public class HandbookClientController {
 	Handbook.Client client;
 
 	
-	public HandbookClientController() {}
+	public ClientController() {}
 
 	
 	public void connect(String host, int port) {
@@ -36,7 +37,7 @@ public class HandbookClientController {
 		disconnect();
 		
 		try {
-			transport = new TFramedTransport(new TSocket(host, port));
+			transport = new TFramedTransport(new TSocket(host, port, 5000));
 			transport.open();
 
 			TProtocol protocol = new TBinaryProtocol(transport);
@@ -69,8 +70,10 @@ public class HandbookClientController {
 		
 		try {
 			articles = client.getArticlesHeaders();
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
 		
 		return articles;
@@ -81,19 +84,25 @@ public class HandbookClientController {
 			return client.getAuthorByName(authorName);
 		} catch (NoAuthorException ex) {
 			throw ex;
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
-			return null;
+			handleThriftException(e);
 		}
+		
+		return null;
 	}
 
 	public int addAuthor(Author newAuthor) {
 		try {
 			return client.addAuthor(newAuthor);
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
-			return -1;
+			handleThriftException(e);
 		}
+		
+		return -1;
 	}
 
 	public void addArticle(ArticleHeader article) {
@@ -103,8 +112,10 @@ public class HandbookClientController {
 			view.showAlertMessage("Can not add article, because parent article doesn't exist.");
 		} catch (NoAuthorException e) {
 			view.showAlertMessage("Can not add article due to invalid author ID.");
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
 	}
 
@@ -113,8 +124,10 @@ public class HandbookClientController {
 			return client.getArticleContent(articleId);
 		} catch (NoArticleException e) {
 			view.showAlertMessage("Can not get content of nonexisting article!");
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
 		
 		return "";
@@ -125,8 +138,10 @@ public class HandbookClientController {
 			return client.getAuthorById(authorId);
 		} catch (NoAuthorException e) {
 			view.showAlertMessage("Author doesn't exist.");
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
 		
 		return null;
@@ -145,8 +160,10 @@ public class HandbookClientController {
 			view.showAlertMessage("Can not update article with invalid ID.");
 		} catch (NoAuthorException e) {
 			view.showAlertMessage("Can not update article of nonexisting author.");
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
 	}
 
@@ -155,8 +172,15 @@ public class HandbookClientController {
 			client.deleteArticle(articleId);
 		} catch (NoArticleException e) {
 			view.showAlertMessage("Can not delete nonexisting article.");
+		} catch (InternalServiceException e) {
+			view.showAlertMessage(e.getMessage());
 		} catch (TException e) {
-			view.showAlertMessage("An error occured while processing task!");
+			handleThriftException(e);
 		}
+	}
+
+	
+	private void handleThriftException(TException ex) {
+		view.showAlertMessage("An error occured while communicating with server!");
 	}
 }

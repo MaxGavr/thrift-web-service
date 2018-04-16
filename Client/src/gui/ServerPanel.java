@@ -1,17 +1,19 @@
 package gui;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.text.MaskFormatter;
 
 
@@ -23,7 +25,7 @@ public class ServerPanel {
 	private JPanel serverPanel;
 
 	private JFormattedTextField ipField;
-	private JTextField portField;
+	private JFormattedTextField portField;
 	private JButton connectButton;
 	private JLabel statusLabel;
 
@@ -36,26 +38,19 @@ public class ServerPanel {
 	}
 
 	
-	private void createActionListeners() {
-		connectButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				
-				if (!parentWindow.getController().isConnected()) {
-					connectToServer();
-				} else {
-					disconnectFromServer();
-				}
-			}
-		});
+	public JComponent getRootComponent() {
+		return serverPanel;
 	}
 
 
 	private void connectToServer() {
-		// TODO: validate fields
-		String host = ipField.getText();
-		// TODO: add number MaskFormatter for port field
-		int port = Integer.parseInt(portField.getText());
+		if (!validateAddress()) {
+			parentWindow.showAlertMessage("Enter valid host address and port.");
+			return;
+		}
+		
+		String host = ipField.getText().replace(" ", "");
+		int port = Integer.parseInt(portField.getText().replace(" ", ""));
 		
 		parentWindow.getController().connect(host, port);
 	
@@ -69,7 +64,7 @@ public class ServerPanel {
 		}
 	}
 	
-	protected void disconnectFromServer() {
+	public void disconnectFromServer() {
 		parentWindow.getController().disconnect();
 		
 		ipField.setEnabled(true);
@@ -79,9 +74,26 @@ public class ServerPanel {
 		parentWindow.onDisconnectFromServer();
 	}
 
+	
+	private boolean validateAddress() {
+		try {
+			for (String token : ipField.getText().split(".")) {
+				Integer.parseInt(token.replace(" ", ""));
+			}
+			Integer.parseInt(portField.getText().replace(" ", ""));
+			
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		
+		return true;
+	}
 
 	private void initializeControls() {
 		serverPanel = new JPanel(new GridBagLayout());
+		serverPanel.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(Color.GRAY),
+				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 		
 		statusLabel = new JLabel("Server status");
 		
@@ -92,6 +104,7 @@ public class ServerPanel {
 		constr.fill = GridBagConstraints.HORIZONTAL;
 		constr.anchor = GridBagConstraints.LINE_START;
 		constr.weightx = 0.2;
+		constr.insets = new Insets(0, 0, 3, 0);
 		
 		serverPanel.add(statusLabel, constr);
 		
@@ -102,12 +115,14 @@ public class ServerPanel {
 		constr.gridy = 1;
 		constr.fill = GridBagConstraints.HORIZONTAL;
 		constr.anchor = GridBagConstraints.LINE_START;
+		constr.insets = new Insets(0, 0, 0, 5);
 		
 		serverPanel.add(ipLabel, constr);
 		
 		try {
 			MaskFormatter ipFormatter = new MaskFormatter("###.###.###.###");
 			ipField = new JFormattedTextField(ipFormatter);
+			ipField.setFocusLostBehavior(JFormattedTextField.PERSIST);
 		} catch (ParseException e) {
 			e.printStackTrace();
 			return;
@@ -127,8 +142,8 @@ public class ServerPanel {
 		constr = new GridBagConstraints();
 		constr.gridx = 2;
 		constr.gridy = 1;
-		constr.fill = GridBagConstraints.HORIZONTAL;
-		constr.anchor = GridBagConstraints.LINE_START;
+		constr.anchor = GridBagConstraints.CENTER;
+		constr.insets = new Insets(0, 10, 0, 0);
 		constr.weightx = 0.3;
 		
 		serverPanel.add(connectButton, constr);
@@ -140,10 +155,18 @@ public class ServerPanel {
 		constr.gridy = 2;
 		constr.fill = GridBagConstraints.HORIZONTAL;
 		constr.anchor = GridBagConstraints.LINE_START;
+		constr.insets = new Insets(0, 0, 0, 5);
 		
 		serverPanel.add(portLabel, constr);
 		
-		portField = new JTextField();
+		try {
+			MaskFormatter portFormatter = new MaskFormatter("#####");
+			portField = new JFormattedTextField(portFormatter);
+			portField.setFocusLostBehavior(JFormattedTextField.PERSIST);
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return;
+		}
 		
 		constr = new GridBagConstraints();
 		constr.gridx = 1;
@@ -153,9 +176,18 @@ public class ServerPanel {
 		
 		serverPanel.add(portField, constr);
 	}
-	
-	public JComponent getRootComponent() {
-		return serverPanel;
-	}
 
+	private void createActionListeners() {
+		connectButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				
+				if (!parentWindow.getController().isConnected()) {
+					connectToServer();
+				} else {
+					disconnectFromServer();
+				}
+			}
+		});
+	}
 }

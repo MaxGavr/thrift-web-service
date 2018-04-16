@@ -117,11 +117,16 @@ public class ContentTreePanel {
 	private void onSelectedArticleChanged() {
 		DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
 		if (selectedNode == null || selectedNode == getTreeRoot()) {
+			parentWindow.getArticlePanel().showArticle(null);
 			return;
 		}
 		
-		ArticleHeader selectedArticle = (ArticleHeader) selectedNode.getUserObject();
-		parentWindow.getArticlePanel().showArticle(selectedArticle);
+		try {
+			ArticleHeader selectedArticle = (ArticleHeader) selectedNode.getUserObject();
+			parentWindow.getArticlePanel().showArticle(selectedArticle);
+		} catch (ClassCastException e) {
+			parentWindow.getArticlePanel().showArticle(null);
+		}
 	}
 
 	private DefaultMutableTreeNode getTreeRoot() {

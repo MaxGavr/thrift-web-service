@@ -4,31 +4,31 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import controller.HandbookClientController;
+import controller.ClientController;
 import gui.tree.ContentTreePanel;
 
 
 
 public class AppWindow {
 	
-	private HandbookClientController controller;
+	private ClientController controller;
 
 	private JFrame mainFrame;
 	
 	private ServerPanel serverPanel;
 	private ArticlePanel articlePanel;
-	private ButtonsPanel buttonsPanel;
 	private ContentTreePanel treePanel;
 	private AuthorPanel authorPanel;
 	
 
-	public AppWindow(HandbookClientController controller) {
+	public AppWindow(ClientController controller) {
 		this.controller = controller;
 		if (controller != null) {
 			controller.setView(this);
@@ -43,11 +43,11 @@ public class AppWindow {
 	}
 	
 	public void showAlertMessage(String message) {
-		JOptionPane.showMessageDialog(mainFrame, message);
+		JOptionPane.showMessageDialog(mainFrame, message, "Message", JOptionPane.WARNING_MESSAGE);
 	}
 
 	
-	public HandbookClientController getController() {
+	public ClientController getController() {
 		return controller;
 	}
 	
@@ -57,10 +57,6 @@ public class AppWindow {
 	
 	public ArticlePanel getArticlePanel() {
 		return articlePanel;
-	}
-	
-	public ButtonsPanel getButtonsPanel() {
-		return buttonsPanel;
 	}
 	
 	public ContentTreePanel getTreePanel() {
@@ -78,16 +74,18 @@ public class AppWindow {
 
 
 	public void onDisconnectFromServer() {
-		enableComponent(articlePanel.getRootComponent(), false);
+		enableComponent(articlePanel.getArticlePanel(), false);
+		enableComponent(articlePanel.getButtonsPanel(), false);
 		enableComponent(treePanel.getRootComponent(), false);
-		enableComponent(buttonsPanel.getRootComponent(), false);
 		enableComponent(authorPanel.getRootComponent(), false);
+		
+		authorPanel.resetAuthor();
 	}
 	
 	public void onChooseAuthor() {
-		enableComponent(articlePanel.getRootComponent(), true);
+		enableComponent(articlePanel.getArticlePanel(), true);
+		enableComponent(articlePanel.getButtonsPanel(), true);
 		enableComponent(treePanel.getRootComponent(), true);
-		enableComponent(buttonsPanel.getRootComponent(), true);
 		
 		treePanel.updateArticlesTree();
 	}
@@ -95,7 +93,8 @@ public class AppWindow {
 	
 	private void initialize() {
 		mainFrame = new JFrame();
-		mainFrame.setBounds(100, 100, 450, 300);
+		mainFrame.setTitle("Pascal Handbook Client");
+		mainFrame.setBounds(100, 100, 800, 600);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.addWindowListener(new WindowAdapter() {
 			@Override
@@ -108,6 +107,8 @@ public class AppWindow {
 		
 		mainFrame.setLayout(new GridBagLayout());
 
+		// server panel
+		
 		serverPanel = new ServerPanel(this);
 		
 		GridBagConstraints constr = new GridBagConstraints();
@@ -117,8 +118,11 @@ public class AppWindow {
 		constr.anchor = GridBagConstraints.FIRST_LINE_START;
 		constr.weightx = 0.7;
 		constr.weighty = 0.05;
+		constr.insets = new Insets(5, 5, 5, 5);
 		
 		mainFrame.add(serverPanel.getRootComponent(), constr);
+		
+		// article panel
 		
 		articlePanel = new ArticlePanel(this);
 		
@@ -128,10 +132,9 @@ public class AppWindow {
 		constr.fill = GridBagConstraints.BOTH;
 		constr.anchor = GridBagConstraints.LINE_START;
 		constr.weighty = 0.9;
+		constr.insets = new Insets(5, 5, 5, 5);
 		
-		mainFrame.add(articlePanel.getRootComponent(), constr);
-		
-		buttonsPanel = new ButtonsPanel(this);
+		mainFrame.add(articlePanel.getArticlePanel(), constr);
 		
 		constr = new GridBagConstraints();
 		constr.gridx = 0;
@@ -139,8 +142,11 @@ public class AppWindow {
 		constr.fill = GridBagConstraints.BOTH;
 		constr.anchor = GridBagConstraints.LINE_START;
 		constr.weighty = 0.05;
+		constr.insets = new Insets(5, 5, 5, 5);
 		
-		mainFrame.add(buttonsPanel.getRootComponent(), constr);
+		mainFrame.add(articlePanel.getButtonsPanel(), constr);
+		
+		// tree panel
 		
 		treePanel = new ContentTreePanel(this);
 		
@@ -151,8 +157,11 @@ public class AppWindow {
 		constr.fill = GridBagConstraints.BOTH;
 		constr.anchor = GridBagConstraints.PAGE_START;
 		constr.weightx = 0.3;
+		constr.insets = new Insets(5, 5, 5, 5);
 		
 		mainFrame.add(treePanel.getRootComponent(), constr);
+		
+		// author panel
 		
 		authorPanel = new AuthorPanel(this);
 		
@@ -161,12 +170,13 @@ public class AppWindow {
 		constr.gridy = 2;
 		constr.fill = GridBagConstraints.BOTH;
 		constr.anchor = GridBagConstraints.CENTER;
+		constr.insets = new Insets(5, 5, 5, 5);
 		
 		mainFrame.add(authorPanel.getRootComponent(), constr);
 		
-		enableComponent(articlePanel.getRootComponent(), false);
+		enableComponent(articlePanel.getArticlePanel(), false);
+		enableComponent(articlePanel.getButtonsPanel(), false);
 		enableComponent(treePanel.getRootComponent(), false);
-		enableComponent(buttonsPanel.getRootComponent(), false);
 		enableComponent(authorPanel.getRootComponent(), false);
 	}
 	

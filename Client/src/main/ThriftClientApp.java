@@ -4,13 +4,13 @@ import gui.AppWindow;
 
 import javax.swing.SwingUtilities;
 
-import controller.HandbookClientController;
+import controller.ClientController;
 
 public class ThriftClientApp {
 
 	public static void main(String[] args) {
 		
-		HandbookClientController controller = new HandbookClientController();
+		ClientController controller = new ClientController();
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
